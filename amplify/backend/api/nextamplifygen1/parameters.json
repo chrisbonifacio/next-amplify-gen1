@@ -1,0 +1,11 @@
+{
+  "AppSyncApiName": "nextamplifygen1",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false,
+  "AuthCognitoUserPoolId": {
+    "Fn::GetAtt": [
+      "authnextamplifygen145198649",
+      "Outputs.UserPoolId"
+    ]
+  }
+}

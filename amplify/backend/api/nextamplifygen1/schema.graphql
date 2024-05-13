@@ -1,0 +1,133 @@
+enum SongOrigin {
+  YOUTUBE
+  UPLOAD
+}
+
+type PlaylistSong
+  @model
+  @auth(
+    rules: [
+      { allow: public, operations: [read] }
+      {
+        allow: private
+        provider: iam
+        operations: [create, read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  song: Song @belongsTo
+  playlist: Playlist @belongsTo
+  order: Int
+  playlistID: ID! @index(name: "byPlaylist")
+  songID: ID! @index(name: "bySong")
+}
+
+type SongRequest
+  @model
+  @auth(
+    rules: [
+      { allow: public, operations: [create, read] }
+      {
+        allow: private
+        provider: iam
+        operations: [create, read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  song: Song @belongsTo
+  requestedOn: AWSDateTime
+  playlistID: ID! @index(name: "byPlaylist")
+  songID: ID! @index(name: "bySong")
+}
+
+type Artist
+  @model
+  @auth(
+    rules: [
+      { allow: public, operations: [read] }
+      {
+        allow: private
+        provider: iam
+        operations: [create, read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  albums: [Album] @hasMany
+  songs: [Song] @hasMany
+}
+
+type Playlist
+  @model
+  @aws_cognito_user_pools
+  @auth(
+    rules: [
+      { allow: owner }
+      { allow: public, operations: [read, create] }
+      { allow: private, provider: iam }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  isNormalized: Boolean!
+  hasCountdown: Boolean!
+  hasFadeIn: Boolean!
+  hasFadeOut: Boolean!
+  allowSuggestions: Boolean!
+  minimumSnippetLength: Int!
+  maximumSnippetLength: Int!
+  songs: [PlaylistSong] @hasMany(indexName: "byPlaylist", fields: ["id"])
+  songRequests: [SongRequest] @hasMany(indexName: "byPlaylist", fields: ["id"])
+  currentSongIndex: Int
+  currentSongPlayhead: Int
+  isPlaying: Boolean
+}
+
+type Song
+  @model
+  @auth(
+    rules: [
+      { allow: private, provider: iam }
+      { allow: public }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  duration: Int
+  description: String
+  filePath: String
+  start: Int
+  end: Int
+  songOrigin: SongOrigin
+  playlists: [PlaylistSong] @hasMany(indexName: "bySong", fields: ["id"])
+  album: Album @belongsTo
+  artist: Artist @belongsTo
+  songRequests: [SongRequest] @hasMany(indexName: "bySong", fields: ["id"])
+}
+
+type Album
+  @model
+  @auth(
+    rules: [
+      { allow: public, operations: [read] }
+      {
+        allow: private
+        provider: iam
+        operations: [create, read, update, delete]
+      }
+      { allow: private, operations: [read] }
+    ]
+  ) {
+  id: ID!
+  name: String!
+  songs: [Song] @hasMany
+  artist: Artist @belongsTo
+}
